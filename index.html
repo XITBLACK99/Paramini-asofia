@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Para mi amada Sofía ✨</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Lora:ital,wght@0,400;0,700;1,400&display=swap');
+
+        body, html { margin: 0; padding: 0; height: 100%; background: #000; overflow: hidden; font-family: 'Lora', serif; }
+        
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        #canvasEstrellas { z-index: 0; }
+        #canvasParticulas { z-index: 2; pointer-events: none; }
+
+        #universo {
+            height: 100vh;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            position: relative; z-index: 1; pointer-events: none;
+        }
+
+        .titulo {
+            color: white; font-family: 'Dancing Script', cursive; font-size: 3.5rem;
+            text-shadow: 0 0 20px rgba(212, 175, 55, 0.8); margin-bottom: 20px;
+            pointer-events: auto; text-align: center;
+        }
+
+        .escenario { width: 92%; max-width: 450px; pointer-events: auto; }
+        
+        .sobre {
+            width: 100%; height: 230px; background: #fdfaf7; border-radius: 15px;
+            display: flex; justify-content: center; align-items: center;
+            position: relative; box-shadow: 0 20px 50px rgba(0,0,0,1); cursor: pointer;
+            border: 1px solid #e0d5c5; transition: transform 0.3s;
+        }
+
+        .solapa {
+            position: absolute; top: 0; width: 0; height: 0;
+            border-left: 200px solid transparent; border-right: 200px solid transparent;
+            border-top: 130px solid #ecd8c5; z-index: 2;
+        }
+
+        .carta {
+            width: 100%; height: 600px; background: white; border-radius: 15px;
+            display: none; padding: 12px; box-sizing: border-box;
+            border: 10px double #d4af37; 
+            box-shadow: 0 0 60px rgba(212, 175, 55, 0.6);
+            animation: aparecer 1s ease-out;
+        }
+
+        @keyframes aparecer { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+
+        .papel {
+            height: 100%; overflow-y: auto; padding: 25px;
+            background-image: linear-gradient(#f3f3f3 1px, transparent 1px);
+            background-size: 100% 45px; line-height: 45px; color: #1a2533;
+            font-size: 1.6rem; text-align: left;
+        }
+
+        .cursor { font-weight: bold; color: #d4af37; animation: parpadeo 0.8s infinite; }
+        @keyframes parpadeo { 50% { opacity: 0; } }
+    </style>
+</head>
+<body>
+
+<canvas id="canvasEstrellas"></canvas>
+<canvas id="canvasParticulas"></canvas>
+
+<div id="universo">
+    <audio id="musica" preload="auto">
+        <source src="música.mp3" type="audio/mpeg">
+    </audio>
+    
+    <h1 class="titulo">Para: Sofía ✨</h1>
+
+    <div class="escenario">
+        <div id="sobre" class="sobre" onclick="abrirCarta()">
+            <div class="solapa"></div>
+            <div style="font-size: 5.5rem; z-index: 5; filter: drop-shadow(0 0 20px red);">❤️</div>
+        </div>
+
+        <div id="carta" class="carta">
+            <div class="papel">
+                <div id="texto"></div><span class="cursor">|</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const cEstrellas = document.getElementById('canvasEstrellas');
+    const ctxE = cEstrellas.getContext('2d');
+    const cParticulas = document.getElementById('canvasParticulas');
+    const ctxP = cParticulas.getContext('2d');
+    
+    let estrellas = [], fugaces = [], particulas = [];
+    let cartaAbierta = false; 
+    const tiposParticulas = ['❤️', '🌸', '🌹', '💖', '✨', '💐'];
+
+    function ajustar() {
+        cEstrellas.width = cParticulas.width = window.innerWidth;
+        cEstrellas.height = cParticulas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', ajustar);
+    ajustar();
+
+    for (let i = 0; i < 150; i++) {
+        estrellas.push({ x: Math.random() * cEstrellas.width, y: Math.random() * cEstrellas.height, r: Math.random() * 2, b: Math.random(), v: Math.random() * 0.02 + 0.01 });
+    }
+
+    function crearFugaz() {
+        fugaces.push({ x: Math.random() * cEstrellas.width, y: 0, len: Math.random() * 120 + 80, v: Math.random() * 12 + 10, o: 1 });
+    }
+
+    function crearParticula() {
+        particulas.push({
+            x: Math.random() * cParticulas.width,
+            y: -30,
+            texto: tiposParticulas[Math.floor(Math.random() * tiposParticulas.length)],
+            vel: Math.random() * 2.5 + 1.5,
+            size: Math.random() * 25 + 18
+        });
+    }
+
+    function dibujar() {
+        ctxE.fillStyle = '#000'; ctxE.fillRect(0, 0, cEstrellas.width, cEstrellas.height);
+        estrellas.forEach(s => {
+            s.b += s.v; if (s.b > 1 || s.b < 0.2) s.v *= -1;
+            ctxE.fillStyle = `rgba(255, 255, 255, ${s.b})`;
+            ctxE.beginPath(); ctxE.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctxE.fill();
+        });
+        fugaces.forEach((f, i) => {
+            ctxE.beginPath();
+            let g = ctxE.createLinearGradient(f.x, f.y, f.x - f.len, f.y + f.len);
+            g.addColorStop(0, `rgba(255, 255, 255, ${f.o})`); g.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctxE.strokeStyle = g; ctxE.lineWidth = 3;
+            ctxE.moveTo(f.x, f.y); ctxE.lineTo(f.x - f.len, f.y + f.len); ctxE.stroke();
+            f.x -= f.v; f.y += f.v; f.o -= 0.01;
+            if (f.o <= 0) fugaces.splice(i, 1);
+        });
+
+        ctxP.clearRect(0, 0, cParticulas.width, cParticulas.height);
+        particulas.forEach((p, i) => {
+            ctxP.font = `${p.size}px serif`;
+            ctxP.fillText(p.texto, p.x + Math.sin(p.y / 40) * 20, p.y);
+            p.y += p.vel;
+            if (p.y > cParticulas.height) particulas.splice(i, 1);
+        });
+
+        if (Math.random() < 0.03) crearFugaz();
+        if (cartaAbierta && Math.random() < 0.15) crearParticula();
+        requestAnimationFrame(dibujar);
+    }
+    dibujar();
+
+    function abrirCarta() {
+        const audio = document.getElementById('musica');
+        
+        // Intento forzado de reproducción para saltar bloqueos
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+            playPromise.then(_ => {
+                console.log("Música iniciada correctamente");
+            }).catch(error => {
+                console.log("El navegador bloqueó el audio, intentando de nuevo...");
+                // Segundo intento si el primero falla
+                audio.muted = true;
+                audio.play().then(() => {
+                    audio.muted = false;
+                });
+            });
+        }
+
+        cartaAbierta = true;
+        document.getElementById('sobre').style.display = 'none';
+        document.getElementById('carta').style.display = 'block';
+
+        const mensaje = "Mi querida Sofía...\n\nBajo este cielo infinito de estrellas, te escribo estas líneas que brotan de lo más profundo de mi ser. Eres mi universo entero, el sol que ilumina mis días y la luz que guía mis noches más oscuras.\n\nDesde que llegaste a mi vida, todo es más brillante. Admiro tu fuerza, tu sonrisa y esa forma única que tienes de ver el mundo. No hay estrella que brille tanto como tus ojos.\n\nPrometo estar siempre para ti, para celebrar tus victorias y sostenerte en los momentos difíciles. Eres mi compañera de sueños, mi mejor amiga y el gran amor de mi vida.\n\nTe quiero mucho más allá de lo que las palabras pueden expresar. Por siempre y para siempre. ❤️✨";
+        
+        let n = 0;
+        const papel = document.querySelector('.papel');
+        const intervalo = setInterval(() => {
+            document.getElementById('texto').innerText = mensaje.slice(0, n);
+            n++;
+            papel.scrollTop = papel.scrollHeight;
+            if (n > mensaje.length) clearInterval(intervalo);
+        }, 65);
+    }
+</script>
+</body>
+</html>
